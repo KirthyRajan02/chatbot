@@ -21,33 +21,57 @@ tools.initialize_pdf_index(PDF_DIR)
 print("Initializing API index...")
 tools.initialize_api_index(API_URL)
 
+def get_basic_response(user_input):
+    # Convert to lowercase for easier matching
+    user_input = user_input.lower().strip()
+    
+    # Basic greeting patterns
+    greetings = {
+        'hi': 'Hi! How can I help you today?',
+        'hello': 'Hello! How may I assist you?',
+        'hey': 'Hey there! What can I do for you?',
+        'good morning': 'Good morning! How can I help you today?',
+        'good afternoon': 'Good afternoon! How may I assist you?',
+        'good evening': 'Good evening! What can I do for you?'
+    }
+    
+    # Check for exact matches first
+    if user_input in greetings:
+        return greetings[user_input]
+    
+    # Check if input starts with any greeting
+    for greeting in greetings:
+        if user_input.startswith(greeting):
+            return greetings[greeting]
+    
+    # Return None if no basic response is appropriate
+    return None
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
     user_input = data.get('message', '').strip()
     
-    # Determine the source based on prefix
-    if user_input.lower().startswith("pdf:"):
-        source = "pdf"
-        query = user_input[4:].strip()
-    elif user_input.lower().startswith("api:"):
-        source = "api"
-        query = user_input[4:].strip()
-    else:
-        source = "both"
-        query = user_input
+    if not user_input:
+        return jsonify({"response": "Please enter a message."})
     
-    # Get response(s)
-    responses = tools.get_response(query, source)
+    # First check for basic responses
+    basic_response = get_basic_response(user_input)
+    if basic_response:
+        return jsonify({"response": basic_response})
     
-    # Format response
+    # If not a basic interaction, proceed with data sources
+    responses = tools.get_response(user_input, "both")
+    
+    # Combine responses into a single response
     response_text = ""
-    if "pdf" in responses:
-        response_text += "\nFrom PDF:\n" + responses["pdf"] + "\n\n"
-    if "api" in responses:
-        response_text += "\nFrom API:\n" + responses["api"]
+    if responses:
+        if "pdf" in responses:
+            response_text += responses["pdf"]
+        if "api" in responses:
+            response_text += " " + responses["api"]
     
-    return jsonify({"response": response_text.strip()})
+    return jsonify({"response": response_text.strip() or "I couldn't find a relevant response."})
 
 if __name__ == "__main__":
     app.run(debug=True)
