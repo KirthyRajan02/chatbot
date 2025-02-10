@@ -6,7 +6,6 @@ import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  source?: 'pdf' | 'api' | 'both';
 }
 
 export default function Home() {
@@ -29,12 +28,7 @@ export default function Home() {
 
     const userMessage: Message = {
       role: 'user',
-      content: input,
-      source: input.toLowerCase().startsWith('pdf:') 
-        ? 'pdf' 
-        : input.toLowerCase().startsWith('api:')
-          ? 'api'
-          : 'both'
+      content: input
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -56,15 +50,13 @@ export default function Home() {
       
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.response,
-        source: userMessage.source
+        content: data.response
       }]);
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, there was an error processing your request.',
-        source: userMessage.source
+        content: 'Sorry, there was an error processing your request.'
       }]);
     } finally {
       setIsLoading(false);
@@ -76,9 +68,6 @@ export default function Home() {
       <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl h-[90vh] flex flex-col">
         <div className="p-4 border-b">
           <h1 className="text-2xl font-bold text-gray-800">AI Assistant</h1>
-          <p className="text-sm text-gray-600">
-            Use prefixes 'pdf:' or 'api:' for specific sources, or none for both
-          </p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -97,11 +86,6 @@ export default function Home() {
                 }`}
               >
                 {message.content}
-                {message.source && (
-                  <div className="text-xs mt-1 opacity-75">
-                    Source: {message.source}
-                  </div>
-                )}
               </div>
             </div>
           ))}
